@@ -8,11 +8,28 @@ set -euo pipefail
 # --- SSH (adjust before run) ---
 # Optionally set a custom SSH port, e.g. SSHD_PORT=9022
 SSHD_PORT="${SSHD_PORT:-22}"
+# Space-separated IPs/CIDRs allowed to SSH, e.g. "1.2.3.4 10.0.0.0/8"
+# Leave empty to allow SSH from anywhere (not recommended)
+SSH_ALLOW_IPS="${SSH_ALLOW_IPS:-}"
+# Set to 1 to also allow SSH from the Tailscale interface (tailscale0)
+SSH_ALLOW_TAILSCALE="${SSH_ALLOW_TAILSCALE:-1}"
 
 # --- UFW: allow SSH and RustDesk only ---
 ufw default deny incoming
 ufw default allow outgoing
-ufw allow "$SSHD_PORT/tcp"
+
+if [[ -n "$SSH_ALLOW_IPS" ]]; then
+  for ip in $SSH_ALLOW_IPS; do
+    ufw allow from "$ip" to any port "$SSHD_PORT" proto tcp
+  done
+else
+  ufw allow "$SSHD_PORT/tcp"
+fi
+
+if [[ "${SSH_ALLOW_TAILSCALE}" == "1" ]]; then
+  ufw allow in on tailscale0 to any port "$SSHD_PORT" proto tcp
+fi
+
 ufw allow 21115:21119/tcp
 ufw allow 21116/udp
 ufw --force enable
