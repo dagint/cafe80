@@ -1,10 +1,10 @@
 # RustDesk OSS – hbbs (ID/rendezvous) + hbbr (relay)
 # Relay host is injected via env (RUSTDESK_RELAY_HOST).
-# Pin image tag for security, e.g. rustdesk/rustdesk-server:1.1.15
+# Pinned tag for security; update after checking release notes.
 
 services:
   hbbs:
-    image: rustdesk/rustdesk-server:latest
+    image: rustdesk/rustdesk-server:1.1.15
     container_name: rustdesk-hbbs
     command: hbbs -r ${RUSTDESK_RELAY_HOST:-relay}:21117
     volumes:
@@ -29,7 +29,7 @@ services:
       - "21118:21118"
 
   hbbr:
-    image: rustdesk/rustdesk-server:latest
+    image: rustdesk/rustdesk-server:1.1.15
     container_name: rustdesk-hbbr
     command: hbbr
     volumes:

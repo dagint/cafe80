@@ -23,7 +23,7 @@ Deploy a **RustDesk** ID/relay server on Ubuntu with security-focused defaults a
 
 4. **Deploy**: Run the "Deploy" workflow from the Actions tab or push to `main` (when `deploy/` or the workflow file changes).
 
-5. **Clients**: Use `RUSTDESK_RELAY_HOST` as ID/Relay server; set **Key** to the server’s `deploy/data/id_ed25519.pub` content.
+5. **Clients**: Use `RUSTDESK_RELAY_HOST` as ID/Relay server; set **Key** to the server’s `deploy/data/id_ed25519.pub` content. For unattended access and locking off “remote configuration modification,” see [docs/CLIENT-DEPLOYMENT.md](docs/CLIENT-DEPLOYMENT.md).
 
 ## Repo layout
 
@@ -32,10 +32,16 @@ Deploy a **RustDesk** ID/relay server on Ubuntu with security-focused defaults a
 - `docs/` – RUNBOOK, backup design (later).
 - `.env.example` – Variable names and placeholders only; real values in `.env` (gitignored) and GitHub Secrets.
 
+## Optional: CrowdSec and Tailscale
+
+- **CrowdSec**: run `scripts/hardening/ubuntu-crowdsec.sh` for shared threat intel and firewall blocking (recommended for public-facing hosts); use instead of or alongside fail2ban.
+- **Tailscale**: run `scripts/hardening/ubuntu-tailscale.sh` with a tagged auth key to put the host on your tailnet; configure ACLs so other devices can reach this host but this host cannot reach other tailnet resources. See [docs/TAILSCALE.md](docs/TAILSCALE.md).
+
 ## Plan and runbook
 
 - [PLAN.md](PLAN.md) – Security, backups, Web UI, and how to proceed.
 - [docs/RUNBOOK.md](docs/RUNBOOK.md) – First-time setup, deploy, client config, recovery.
+- [docs/CHECKLIST.md](docs/CHECKLIST.md) – What’s done, what’s missing, and optional next steps.
 
 ## License
 

@@ -32,6 +32,8 @@ Deploy a **RustDesk** server on an **Ubuntu Linux VPS** with security as the top
   - 21115/tcp, 21116/tcp, 21116/udp, 21117/tcp, 21118/tcp, 21119/tcp (or restrict 21118/21119 if you don’t use web client).
 - **Fail2ban**
   - Protect SSH (and optionally nginx if you add it) from brute force.
+- **CrowdSec (optional, recommended for public-facing hosts)**
+  - CrowdSec uses shared threat intelligence and can **replace or complement** fail2ban. It parses SSH (and other) logs and blocks at the firewall via a bouncer. Good fit for a publicly exposed VPS. Use `scripts/hardening/ubuntu-crowdsec.sh`; if using both, consider disabling the fail2ban sshd jail to avoid duplicate blocking.
 - **Updates**
   - `unattended-upgrades` for security updates; reboot if needed (e.g. kernel).
 - **Minimal surface**
@@ -47,7 +49,13 @@ All of this can be encoded in an **Ansible playbook** or **shell script** in the
 - **Reverse proxy**: put any web UI (or future web console) behind **HTTPS** (e.g. Caddy or Nginx + Let’s Encrypt); do not expose RustDesk admin endpoints directly to the internet if avoidable.
 - **Network**: consider a single Docker network for hbbs/hbbr only; expose only required host ports.
 
-### 2.3 Keeping things up to date
+### 2.4 Tailscale (optional): host on tailnet, one-way access
+
+- **Join the VPS to your tailnet** with a **tagged** auth key (e.g. `tag:rustdesk-server`) so you can reach it from other Tailscale devices (SSH, admin) without exposing extra ports.
+- **ACL goal**: other tailnet devices can connect **to** this host; this host must **not** be able to initiate connections to other tailnet resources.
+- **How**: In Tailscale ACLs, allow your admin group/members to reach `tag:rustdesk-server` on ports 22, 21115–21119. Do **not** add any rule where `tag:rustdesk-server` is the **source**; deny-by-default then blocks outbound from this host to the rest of the tailnet. See **docs/TAILSCALE.md** for an example ACL and the one-time join script (`scripts/hardening/ubuntu-tailscale.sh`).
+
+### 2.5 Keeping things up to date
 
 - **OS**: unattended-upgrades + periodic review.
 - **RustDesk**: pin image tag in `docker-compose.yml` (e.g. `rustdesk/rustdesk-server:1.2.3`); use a scheduled GitHub Action or manual workflow to bump the tag and redeploy after checking release notes.
@@ -77,11 +85,14 @@ cafe80/
 ├── scripts/
 │   ├── sync-secrets-to-github.sh   # Pushes .env entries to GitHub Actions secrets
 │   └── hardening/                  # Optional: OS hardening scripts
-│       └── ubuntu-initial.sh
+│       ├── ubuntu-initial.sh
+│       ├── ubuntu-crowdsec.sh   # Optional: CrowdSec + firewall bouncer
+│       └── ubuntu-tailscale.sh  # Optional: join tailnet (tagged; ACL one-way)
 ├── deploy/                    # Or 'ansible/' if you use Ansible
 │   └── docker-compose.yml     # RustDesk hbbs + hbbr (env vars for hostname/key)
 ├── docs/
-│   └── RUNBOOK.md             # How to deploy, recover, rotate secrets
+│   ├── RUNBOOK.md
+│   └── TAILSCALE.md            # Tailscale ACL one-way access             # How to deploy, recover, rotate secrets
 ├── PLAN.md                    # This file
 └── README.md
 ```

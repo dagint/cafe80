@@ -20,10 +20,12 @@ ufw --force enable
 # --- Fail2ban for SSH ---
 apt-get update -qq
 apt-get install -y fail2ban
-cat > /etc/fail2ban/jail.d/sshd.local << 'EOF'
+# Use SSHD_PORT so fail2ban watches the correct port when SSH is on a non-default port
+FAIL2BAN_PORT="${SSHD_PORT:-22}"
+cat > /etc/fail2ban/jail.d/sshd.local << EOF
 [sshd]
 enabled = true
-port = ssh
+port = ${FAIL2BAN_PORT}
 maxretry = 3
 bantime = 3600
 findtime = 600
