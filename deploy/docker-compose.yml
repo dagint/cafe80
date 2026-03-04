@@ -1,0 +1,53 @@
+# RustDesk OSS – hbbs (ID/rendezvous) + hbbr (relay)
+# Relay host is injected via env (RUSTDESK_RELAY_HOST).
+# Pin image tag for security, e.g. rustdesk/rustdesk-server:1.1.15
+
+services:
+  hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbs
+    command: hbbs -r ${RUSTDESK_RELAY_HOST:-relay}:21117
+    volumes:
+      - ./data:/root
+    networks:
+      - rustdesk-net
+    depends_on:
+      - hbbr
+    restart: unless-stopped
+    # Security: drop all caps, no new privileges (adjust if image needs more)
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+    ports:
+      - "21115:21115"
+      - "21116:21116"
+      - "21116:21116/udp"
+      - "21118:21118"
+
+  hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbr
+    command: hbbr
+    volumes:
+      - ./data:/root
+    networks:
+      - rustdesk-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+    ports:
+      - "21117:21117"
+      - "21119:21119"
+
+networks:
+  rustdesk-net:
+    driver: bridge

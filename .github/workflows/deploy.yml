@@ -1,0 +1,54 @@
+# Deploy RustDesk server to Ubuntu VPS.
+# Secrets: VPS_HOST, SSH_PRIVATE_KEY, DEPLOY_USER; optional: SSH_PORT, DEPLOY_PATH, RUSTDESK_RELAY_HOST
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set relay host
+        id: relay
+        run: |
+          RELAY="${{ secrets.RUSTDESK_RELAY_HOST }}"
+          if [ -z "$RELAY" ]; then RELAY="${{ secrets.VPS_HOST }}"; fi
+          echo "relay_host=$RELAY" >> $GITHUB_OUTPUT
+
+      - name: Copy deploy files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: "deploy/*"
+          target: ${{ secrets.DEPLOY_PATH || '~/cafe80' }}
+
+      - name: Run Docker Compose on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            [ -z "$DEPLOY_PATH" ] && DEPLOY_PATH=~/cafe80
+            RELAY_HOST="${{ steps.relay.outputs.relay_host }}"
+            cd "$DEPLOY_PATH"
+            echo "RUSTDESK_RELAY_HOST=$RELAY_HOST" > .env
+            sudo docker compose -f docker-compose.yml pull
+            sudo docker compose -f docker-compose.yml up -d
+            sudo docker image prune -f
