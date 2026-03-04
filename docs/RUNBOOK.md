@@ -23,7 +23,7 @@ If you skip this, the server will run but clients will not be able to connect to
    - **Optional – CrowdSec**: run `scripts/hardening/ubuntu-crowdsec.sh` for shared threat intel and firewall blocking; consider disabling fail2ban sshd jail if using both.
    - Enable unattended-upgrades for security.
 4. **Optional – Tailscale**: to reach this host from your tailnet without exposing SSH publicly, run once (auth key from `.env` or Admin): `TAILSCALE_AUTHKEY=tskey-... ./scripts/hardening/ubuntu-tailscale.sh`. Then set ACLs so this host only **accepts** inbound (no outbound to other tailnet devices). See **docs/TAILSCALE.md**.
-5. **Install Docker**: official method (`get.docker.com`) and add deploy user to `docker` group, or run compose with sudo.
+5. **Install Docker**: official method (`get.docker.com`) and add deploy user to `docker` group, or run compose with sudo. If using sudo in the workflow, the deploy user must have **passwordless sudo** for `docker compose` (e.g. NOPASSWD in sudoers).
 6. **Create deploy directory** on server: `mkdir -p ~/cafe80` (or your `DEPLOY_PATH`).
 
 ## GitHub Actions secrets
@@ -33,7 +33,7 @@ Set these in the repo (Settings → Secrets and variables → Actions):
 | Secret | Description |
 |--------|-------------|
 | `VPS_HOST` | VPS hostname or IP |
-| `SSH_PRIVATE_KEY` | Full PEM body for the deploy user |
+| `SSH_PRIVATE_KEY_B64` | Base64-encoded PEM key (`cat ~/.ssh/id_ed25519 \| base64 -w 0`) |
 | `DEPLOY_USER` | SSH user (e.g. `deploy`) |
 | `SSH_PORT` | Optional; default 22 |
 | `DEPLOY_PATH` | Optional; default `~/cafe80` |
@@ -73,6 +73,37 @@ After first run, on the server:
 4. **Deploy**: Run the Deploy workflow (Actions → Deploy → Run workflow).
 5. **Key**: SSH to the VPS and copy `~/cafe80/data/id_ed25519.pub` (and back up the whole `data/` folder).
 6. **Clients**: Add the public key to your download page or docs; test with one RustDesk client (ID server = relay hostname, Key = contents of `.pub`).
+
+---
+
+## Rollback
+
+Use when a deploy breaks the server or you need to revert to a known-good version.
+
+### Application (RustDesk image)
+
+**Option A – Workflow (no repo change)**  
+1. Actions → Deploy → **Run workflow**.  
+2. Under **Run workflow**, set **Override image tag** to the previous tag (e.g. `1.1.14`).  
+3. Run. The workflow deploys that image; relay host and key are unchanged.
+
+**Option B – Repo + workflow**  
+1. In `deploy/docker-compose.yml`, set both `image:` lines back to the previous tag (e.g. `rustdesk/rustdesk-server:1.1.14`).  
+2. Commit, push (triggers deploy), or run the Deploy workflow manually.  
+3. After confirming rollback, you can change the compose back to the desired tag for future deploys.
+
+**Option C – Manual on server**  
+1. SSH to the VPS, `cd ~/cafe80` (or your DEPLOY_PATH).  
+2. Edit `docker-compose.yml`: set both services’ `image:` to the previous tag.  
+3. Run: `sudo docker compose -f docker-compose.yml pull && sudo docker compose -f docker-compose.yml up -d`.
+
+### Data (key / DB)
+
+If you restored a backup of `~/cafe80/data/` (e.g. after data loss or a bad change):  
+1. Stop: `sudo docker compose -f docker-compose.yml down`.  
+2. Replace `./data` contents with the backup.  
+3. Start: `sudo docker compose -f docker-compose.yml up -d`.  
+If the key changed, update clients or your download page with the restored `id_ed25519.pub`.
 
 ---
 

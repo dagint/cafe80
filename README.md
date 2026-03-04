@@ -14,7 +14,7 @@ Deploy a **RustDesk** ID/relay server on Ubuntu with security-focused defaults a
    # Edit .env with VPS_HOST, DEPLOY_USER, SSH_PRIVATE_KEY, RUSTDESK_RELAY_HOST
    ```
 
-2. **Sync secrets to GitHub** (from repo root, with [gh](https://cli.github.com/) installed and logged in):
+2. **Sync secrets to GitHub** (from repo root, with [gh](https://cli.github.com/) installed and logged in). Use single-line values in `.env` (no embedded newlines).
    ```bash
    ./scripts/sync-secrets-to-github.sh
    ```
@@ -40,7 +40,7 @@ Deploy a **RustDesk** ID/relay server on Ubuntu with security-focused defaults a
 ## Plan and runbook
 
 - [PLAN.md](PLAN.md) – Security, backups, Web UI, and how to proceed.
-- [docs/RUNBOOK.md](docs/RUNBOOK.md) – First-time setup, deploy, client config, recovery.
+- [docs/RUNBOOK.md](docs/RUNBOOK.md) – First-time setup, deploy, client config, recovery, rollback.
 - [docs/CHECKLIST.md](docs/CHECKLIST.md) – What’s done, what’s missing, and optional next steps.
 
 ## License

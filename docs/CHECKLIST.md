@@ -35,6 +35,7 @@ Quick reference against [PLAN.md](../PLAN.md). Use this to close gaps before or 
 |------|--------|
 | **security-scan.yml** | PLAN mentions optional Trivy/CodeQL workflow. Add under `.github/workflows/` if you want CI scans. |
 | **Compose validate + smoke test** | Workflow could add a step to validate compose and curl a RustDesk port after deploy. |
+| **Rollback** | Documented in RUNBOOK § Rollback. Use workflow "Override image tag" or revert compose / restore data. |
 | **Backups** | Planned for later. Add docs/BACKUP.md and a script (tarball + encrypt + S3/GDrive); credentials on server or in secrets only. |
 | **Web client** | Free RustDesk web client: reverse proxy (Caddy/Nginx) + HTTPS; document in RUNBOOK if you add it. |
 | **Dependabot** | Enable in repo for GitHub Actions and (if any) Docker base images. |

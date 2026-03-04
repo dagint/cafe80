@@ -2,6 +2,7 @@
 # Sync local .env to GitHub Actions repository secrets.
 # Run only from your machine; requires gh CLI and gh auth login.
 # Usage: ./scripts/sync-secrets-to-github.sh [path-to-.env]
+# Note: .env values must be single-line (no embedded newlines in values).
 
 set -euo pipefail
 

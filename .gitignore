@@ -1,4 +1,3 @@
-# Secrets and env (never commit)
 .env
 .env.local
 .env.*.local

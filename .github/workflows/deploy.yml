@@ -1,10 +1,17 @@
-# Deploy RustDesk server to Ubuntu VPS.
-# Secrets: VPS_HOST, SSH_PRIVATE_KEY, DEPLOY_USER; optional: SSH_PORT, DEPLOY_PATH, RUSTDESK_RELAY_HOST
+# Deploy RustDesk server to Ubuntu VPS via Tailscale (no public SSH exposure).
+# Secrets: VPS_HOST (Tailscale hostname/IP), SSH_PRIVATE_KEY_B64, DEPLOY_USER, TAILSCALE_AUTHKEY_GH
+# SSH_PRIVATE_KEY_B64: base64-encoded PEM key (cat ~/.ssh/id_ed25519 | base64 -w 0)
+# TAILSCALE_AUTHKEY_GH: ephemeral, pre-authorized key tagged tag:github-actions
+# Rollback: run workflow_dispatch with "Override image tag" set to a previous tag (e.g. 1.1.14).
 
 name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Override image tag for rollback (e.g. 1.1.14); leave empty to use compose default'
+        required: false
   push:
     branches: [main]
     paths:
@@ -18,19 +25,46 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY_GH }}
+          tags: tag:github-actions
+
+      - name: Decode SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > $RUNNER_TEMP/deploy_key
+          chmod 600 $RUNNER_TEMP/deploy_key
+
       - name: Set relay host
         id: relay
         run: |
           RELAY="${{ secrets.RUSTDESK_RELAY_HOST }}"
           if [ -z "$RELAY" ]; then RELAY="${{ secrets.VPS_HOST }}"; fi
           echo "relay_host=$RELAY" >> $GITHUB_OUTPUT
+          if [ -z "$RELAY" ]; then
+            echo "::error::Set at least one of RUSTDESK_RELAY_HOST or VPS_HOST in repository secrets."
+            exit 1
+          fi
+
+      - name: Ensure deploy directory exists on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key_path: ${{ runner.temp }}/deploy_key
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            [ -z "$DEPLOY_PATH" ] && DEPLOY_PATH=~/cafe80
+            mkdir -p "$DEPLOY_PATH"
 
       - name: Copy deploy files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: ${{ runner.temp }}/deploy_key
           port: ${{ secrets.SSH_PORT || 22 }}
           source: "deploy/*"
           target: ${{ secrets.DEPLOY_PATH || '~/cafe80' }}
@@ -40,15 +74,17 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: ${{ runner.temp }}/deploy_key
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             set -e
             DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
             [ -z "$DEPLOY_PATH" ] && DEPLOY_PATH=~/cafe80
             RELAY_HOST="${{ steps.relay.outputs.relay_host }}"
+            IMAGE_TAG="${{ github.event.inputs.image_tag }}"
             cd "$DEPLOY_PATH"
             echo "RUSTDESK_RELAY_HOST=$RELAY_HOST" > .env
+            [ -n "$IMAGE_TAG" ] && echo "RUSTDESK_IMAGE=$IMAGE_TAG" >> .env
             sudo docker compose -f docker-compose.yml pull
             sudo docker compose -f docker-compose.yml up -d
             sudo docker image prune -f

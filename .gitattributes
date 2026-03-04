@@ -1,0 +1,2 @@
+# Shell scripts: always LF so shebang works in WSL/Git Bash
+*.sh text eol=lf
