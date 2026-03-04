@@ -6,28 +6,37 @@
 
 set -euo pipefail
 
-# Install CrowdSec (official one-liner adds repo and installs engine)
+# Add CrowdSec repo (install.crowdsec.net only adds the apt source, does not install)
 if ! command -v crowdsec &>/dev/null; then
-  curl -s https://install.crowdsec.net | sudo sh
+  curl -s https://install.crowdsec.net | sh
+  apt-get install -y crowdsec
 fi
 
-# Install firewall bouncer (iptables; use nftables bouncer if your system uses nftables)
+# Install firewall bouncer (iptables; auto-detects nftables)
 BOUNCER="crowdsec-firewall-bouncer-iptables"
 if command -v nft &>/dev/null && ! command -v iptables-legacy &>/dev/null 2>/dev/null; then
   BOUNCER="crowdsec-firewall-bouncer-nftables"
 fi
-apt-get update -qq
 apt-get install -y "$BOUNCER" || true
 
-# Ensure sshd scenario is enabled (parses logs and triggers decisions)
-cscli scenarios install linux/sshd 2>/dev/null || true
-cscli scenarios enable linux/sshd 2>/dev/null || true
+# Register the bouncer with the local LAPI and inject the API key into its config
+BOUNCER_NAME="firewall-bouncer-$(hostname -s)"
+API_KEY=$(cscli bouncers add "$BOUNCER_NAME" --key "" -o raw 2>/dev/null || true)
+if [[ -n "$API_KEY" ]]; then
+  BOUNCER_CFG="/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml"
+  sed -i "s/^api_key:.*/api_key: ${API_KEY}/" "$BOUNCER_CFG"
+  echo "Bouncer registered: $BOUNCER_NAME"
+else
+  echo "Bouncer may already be registered or cscli failed — check manually:"
+  echo "  cscli bouncers list"
+  echo "  cscli bouncers add firewall-bouncer-manual"
+fi
 
-# Optional: enable nginx if you add a reverse proxy later
-# cscli scenarios install nginx/nginx-proxy && cscli scenarios enable nginx/nginx-proxy
+# Ensure sshd scenario is enabled
+cscli scenarios install crowdsecurity/ssh-bf 2>/dev/null || true
 
 systemctl enable --now crowdsec
-systemctl enable --now crowdsec-firewall-bouncer 2>/dev/null || true
+systemctl restart crowdsec-firewall-bouncer 2>/dev/null || systemctl enable --now crowdsec-firewall-bouncer || true
 
-echo "CrowdSec installed. Check: sudo cscli decisions list"
-echo "If you also use fail2ban, consider disabling fail2ban sshd jail to avoid duplicate blocking."
+echo "CrowdSec installed. Check: cscli decisions list"
+echo "If you also use fail2ban, consider disabling the fail2ban sshd jail."
