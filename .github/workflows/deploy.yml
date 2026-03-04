@@ -89,6 +89,6 @@ jobs:
             cd "$DEPLOY_PATH/deploy"
             echo "RUSTDESK_RELAY_HOST=$RELAY_HOST" > .env
             [ -n "$IMAGE_TAG" ] && echo "RUSTDESK_IMAGE=$IMAGE_TAG" >> .env
-            sudo docker compose -f docker-compose.yml pull
-            sudo docker compose -f docker-compose.yml up -d
-            sudo docker image prune -f
+            docker compose -f docker-compose.yml pull
+            docker compose -f docker-compose.yml up -d
+            docker image prune -f
