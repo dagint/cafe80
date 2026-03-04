@@ -1,7 +1,7 @@
 # Deploy RustDesk server to Ubuntu VPS via Tailscale (no public SSH exposure).
-# Secrets: VPS_HOST (Tailscale hostname/IP), SSH_PRIVATE_KEY_B64, DEPLOY_USER, TAILSCALE_AUTHKEY_GH
+# Secrets: VPS_HOST (Tailscale hostname/IP), SSH_PRIVATE_KEY_B64, DEPLOY_USER, TS_OAUTH_CLIENT_ID, TS_OAUTH_CLIENT_SECRET
 # SSH_PRIVATE_KEY_B64: base64-encoded PEM key (cat ~/.ssh/id_ed25519 | base64 -w 0)
-# TAILSCALE_AUTHKEY_GH: ephemeral, pre-authorized key tagged tag:github-actions
+# TS_OAUTH_CLIENT_ID / TS_OAUTH_CLIENT_SECRET: Tailscale OAuth client scoped to tag:github-actions
 # Rollback: run workflow_dispatch with "Override image tag" set to a previous tag (e.g. 1.1.14).
 
 name: Deploy
@@ -28,7 +28,8 @@ jobs:
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY_GH }}
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-client-secret: ${{ secrets.TS_OAUTH_CLIENT_SECRET }}
           tags: tag:github-actions
 
       - name: Decode SSH key
