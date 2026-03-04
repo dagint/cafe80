@@ -48,7 +48,7 @@ jobs:
           fi
 
       - name: Ensure deploy directory exists on VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -70,7 +70,7 @@ jobs:
           target: ${{ secrets.DEPLOY_PATH || '~/cafe80' }}
 
       - name: Run Docker Compose on VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
