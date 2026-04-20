@@ -8,7 +8,8 @@ Stack: Docker Compose (hbbs + hbbr), hardening scripts, secrets managed via `.en
 ## Repo layout
 
 ```
-deploy/docker-compose.yml         # RustDesk hbbs + hbbr services
+deploy/docker-compose.yml         # RustDesk hbbs + hbbr + Caddy services
+deploy/Caddyfile                  # Caddy reverse proxy config (HTTPS → :21114)
 scripts/sync-secrets-to-github.sh # Push local .env → GitHub Actions secrets
 scripts/hardening/ubuntu-initial.sh
 scripts/hardening/ubuntu-crowdsec.sh
@@ -57,7 +58,7 @@ docs/CHECKLIST.md                 # What's done vs missing
 
 Defaults to `rustdesk/rustdesk-server-pro:1.1.15` (licensed Pro) in `deploy/docker-compose.yml`.
 Override `RUSTDESK_IMAGE_REPO` in `.env` to switch images (e.g. `rustdesk/rustdesk-server` for OSS).
-Pro web console runs on port 21114 — activate your license there after first deploy.
+Pro web console on :21114 is reverse-proxied by Caddy (HTTPS on :443). Activate your license at `https://RUSTDESK_RELAY_HOST`.
 Check [github.com/rustdesk/rustdesk-server-pro/releases](https://github.com/rustdesk/rustdesk-server-pro/releases) before upgrading.
 To upgrade: update both `hbbs` and `hbbr` image tags, commit and push (or run workflow).
 
@@ -79,7 +80,7 @@ See `docs/RUNBOOK.md` § Rollback for manual options.
 - [ ] DNS A record for relay hostname → VPS IP
 - [ ] Ubuntu 22.04/24.04, deploy user, SSH key in `authorized_keys`
 - [ ] SSH: `PermitRootLogin no`, `PasswordAuthentication no`
-- [ ] UFW: allow 22 (or custom SSH port), 21114/tcp (Pro console), 21115–21119/tcp, 21116/udp
+- [ ] UFW: allow 22 (or custom SSH port), 80/tcp, 443/tcp (Caddy), 21115–21119/tcp, 21116/udp
 - [ ] `scripts/hardening/ubuntu-initial.sh` (fail2ban, unattended-upgrades)
 - [ ] Docker installed, deploy user in `docker` group (or passwordless sudo for `docker compose`)
 - [ ] `mkdir -p ~/cafe80`
