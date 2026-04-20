@@ -18,7 +18,7 @@ If you skip this, the server will run but clients will not be able to connect to
 2. **Create deploy user** (e.g. `deploy`), add your SSH public key to `~/.ssh/authorized_keys`.
 3. **Harden OS** (run as root or with sudo):
    - SSH: disable root login, key-only auth, optional non-default port.
-   - UFW: default deny incoming; allow SSH (22 or custom), 80/tcp, 443/tcp (Caddy), RustDesk ports 21115–21119/tcp, 21116/udp.
+   - UFW: default deny incoming; allow SSH (22 or custom), 21114/tcp on tailscale0 only (Pro console), RustDesk ports 21115–21119/tcp, 21116/udp.
    - Install and enable fail2ban (sshd): `scripts/hardening/ubuntu-initial.sh`.
    - **Optional – CrowdSec**: run `scripts/hardening/ubuntu-crowdsec.sh` for shared threat intel and firewall blocking; consider disabling fail2ban sshd jail if using both.
    - Enable unattended-upgrades for security.
@@ -57,7 +57,7 @@ After first run, on the server:
 - `~/cafe80/data/id_ed25519.pub` is the **public key** (give this to clients; e.g. add to your download page).
 - `~/cafe80/data/id_ed25519` is the **private key**; do not share it.
 - In RustDesk client: Settings → Network → set **ID server** and **Relay server** to `RUSTDESK_RELAY_HOST`, and **Key** to the contents of `id_ed25519.pub`.
-- **License activation (Pro)**: open `https://<RUSTDESK_RELAY_HOST>` (Caddy proxies to the web console on :21114), enter your license key, and save. The server will not relay connections until the license is activated.
+- **License activation (Pro)**: access the web console on port 21114 via your reverse proxy (SWAG/Authentik on `flux` over Tailscale), enter your license key, and save. The server will not relay connections until the license is activated.
 
 **Back up the key:** Copy `~/cafe80/data/` (or at least `id_ed25519` and `id_ed25519.pub`) to a safe place right after first deploy. If the VPS is lost without a backup, you will need to redistribute a new key to all clients.
 
