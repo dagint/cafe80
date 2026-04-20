@@ -86,9 +86,11 @@ jobs:
             [ -z "$DEPLOY_PATH" ] && DEPLOY_PATH=~/cafe80
             RELAY_HOST="${{ steps.relay.outputs.relay_host }}"
             IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+            IMAGE_REPO="${{ secrets.RUSTDESK_IMAGE_REPO }}"
             cd "$DEPLOY_PATH/deploy"
             echo "RUSTDESK_RELAY_HOST=$RELAY_HOST" > .env
             [ -n "$IMAGE_TAG" ] && echo "RUSTDESK_IMAGE=$IMAGE_TAG" >> .env
+            [ -n "$IMAGE_REPO" ] && echo "RUSTDESK_IMAGE_REPO=$IMAGE_REPO" >> .env
             docker compose -f docker-compose.yml pull
             docker compose -f docker-compose.yml up -d
             docker image prune -f

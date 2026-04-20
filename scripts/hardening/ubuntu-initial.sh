@@ -30,6 +30,7 @@ if [[ "${SSH_ALLOW_TAILSCALE}" == "1" ]]; then
   ufw allow in on tailscale0 to any port "$SSHD_PORT" proto tcp
 fi
 
+ufw allow 21114/tcp comment 'RustDesk Pro web console'
 ufw allow 21115:21119/tcp
 ufw allow 21116/udp
 ufw --force enable

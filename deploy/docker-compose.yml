@@ -1,16 +1,17 @@
-# RustDesk OSS – hbbs (ID/rendezvous) + hbbr (relay)
+# RustDesk hbbs (ID/rendezvous) + hbbr (relay)
 # Relay host: RUSTDESK_RELAY_HOST is written to .env on the server by the deploy workflow.
-# Image tag: default 1.1.15; override with RUSTDESK_IMAGE in .env (workflow uses this for rollback).
+# Image: defaults to Pro (licensed). Override RUSTDESK_IMAGE_REPO in .env to switch images.
+# Tag: default 1.1.15; override with RUSTDESK_IMAGE in .env (workflow uses this for rollback).
+# Pro licensing requires host networking and license activation via web console on :21114.
 
 services:
   hbbs:
-    image: rustdesk/rustdesk-server:${RUSTDESK_IMAGE:-1.1.15}
+    image: ${RUSTDESK_IMAGE_REPO:-rustdesk/rustdesk-server-pro}:${RUSTDESK_IMAGE:-1.1.15}
     container_name: rustdesk-hbbs
     command: hbbs -r ${RUSTDESK_RELAY_HOST:-relay}:21117
     volumes:
       - ./data:/root
-    networks:
-      - rustdesk-net
+    network_mode: host
     depends_on:
       - hbbr
     restart: unless-stopped
@@ -22,20 +23,13 @@ services:
         limits:
           memory: 512m
           cpus: "0.5"
-    ports:
-      - "21115:21115"
-      - "21116:21116"
-      - "21116:21116/udp"
-      - "21118:21118"
-
   hbbr:
-    image: rustdesk/rustdesk-server:${RUSTDESK_IMAGE:-1.1.15}
+    image: ${RUSTDESK_IMAGE_REPO:-rustdesk/rustdesk-server-pro}:${RUSTDESK_IMAGE:-1.1.15}
     container_name: rustdesk-hbbr
     command: hbbr
     volumes:
       - ./data:/root
-    networks:
-      - rustdesk-net
+    network_mode: host
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -44,10 +38,3 @@ services:
         limits:
           memory: 512m
           cpus: "0.5"
-    ports:
-      - "21117:21117"
-      - "21119:21119"
-
-networks:
-  rustdesk-net:
-    driver: bridge
