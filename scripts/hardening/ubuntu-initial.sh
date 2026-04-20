@@ -30,8 +30,7 @@ if [[ "${SSH_ALLOW_TAILSCALE}" == "1" ]]; then
   ufw allow in on tailscale0 to any port "$SSHD_PORT" proto tcp
 fi
 
-ufw allow 80/tcp comment 'HTTP (Caddy ACME + redirect)'
-ufw allow 443/tcp comment 'HTTPS (Caddy reverse proxy)'
+ufw allow in on tailscale0 to any port 21114 proto tcp comment 'RustDesk Pro console (Tailscale only)'
 ufw allow 21115:21119/tcp
 ufw allow 21116/udp
 ufw --force enable

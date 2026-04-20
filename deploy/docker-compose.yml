@@ -1,30 +1,10 @@
-# RustDesk hbbs (ID/rendezvous) + hbbr (relay) + Caddy reverse proxy
+# RustDesk hbbs (ID/rendezvous) + hbbr (relay)
 # Relay host: RUSTDESK_RELAY_HOST is written to .env on the server by the deploy workflow.
 # Image: defaults to Pro (licensed). Override RUSTDESK_IMAGE_REPO in .env to switch images.
 # Tag: default 1.8.2; override with RUSTDESK_IMAGE in .env (workflow uses this for rollback).
-# Pro web console proxied via Caddy (HTTPS on :443 → localhost:21114).
+# Pro web console on :21114 — accessed via external reverse proxy over Tailscale only.
 
 services:
-  caddy:
-    image: caddy:2-alpine
-    container_name: rustdesk-caddy
-    network_mode: host
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    environment:
-      - RUSTDESK_RELAY_HOST=${RUSTDESK_RELAY_HOST:-localhost}
-    depends_on:
-      - hbbs
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    deploy:
-      resources:
-        limits:
-          memory: 128m
-          cpus: "0.25"
   hbbs:
     image: ${RUSTDESK_IMAGE_REPO:-rustdesk/rustdesk-server-pro}:${RUSTDESK_IMAGE:-1.8.2}
     container_name: rustdesk-hbbs
@@ -58,7 +38,3 @@ services:
         limits:
           memory: 512m
           cpus: "0.5"
-
-volumes:
-  caddy_data:
-  caddy_config:
