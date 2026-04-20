@@ -6,7 +6,7 @@
 
 services:
   hbbs:
-    image: ${RUSTDESK_IMAGE_REPO:-rustdesk/rustdesk-server-pro}:${RUSTDESK_IMAGE:-1.1.15}
+    image: ${RUSTDESK_IMAGE_REPO:-rustdesk/rustdesk-server-pro}:${RUSTDESK_IMAGE:-1.8.2}
     container_name: rustdesk-hbbs
     command: hbbs -r ${RUSTDESK_RELAY_HOST:-relay}:21117
     volumes:
@@ -24,7 +24,7 @@ services:
           memory: 512m
           cpus: "0.5"
   hbbr:
-    image: ${RUSTDESK_IMAGE_REPO:-rustdesk/rustdesk-server-pro}:${RUSTDESK_IMAGE:-1.1.15}
+    image: ${RUSTDESK_IMAGE_REPO:-rustdesk/rustdesk-server-pro}:${RUSTDESK_IMAGE:-1.8.2}
     container_name: rustdesk-hbbr
     command: hbbr
     volumes:
