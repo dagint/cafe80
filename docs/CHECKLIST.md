@@ -45,8 +45,8 @@ Quick reference against [PLAN.md](../PLAN.md). Use this to close gaps before or 
 
 ## Image pinning
 
-Compose uses `rustdesk/rustdesk-server:1.1.15`. To upgrade:
+Compose defaults to `rustdesk/rustdesk-server-pro:1.1.15` (licensed Pro). To upgrade:
 
-1. Check [RustDesk server releases](https://github.com/rustdesk/rustdesk-server/releases).
+1. Check [RustDesk Server Pro releases](https://github.com/rustdesk/rustdesk-server-pro/releases).
 2. Update the tag in `deploy/docker-compose.yml` for both hbbs and hbbr.
 3. Commit and push (or run Deploy workflow) so the VPS pulls the new image.

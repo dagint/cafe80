@@ -55,8 +55,10 @@ docs/CHECKLIST.md                 # What's done vs missing
 
 ## RustDesk image
 
-Pinned to `rustdesk/rustdesk-server:1.1.15` in `deploy/docker-compose.yml`.
-Check [github.com/rustdesk/rustdesk-server/releases](https://github.com/rustdesk/rustdesk-server/releases) before upgrading.
+Defaults to `rustdesk/rustdesk-server-pro:1.1.15` (licensed Pro) in `deploy/docker-compose.yml`.
+Override `RUSTDESK_IMAGE_REPO` in `.env` to switch images (e.g. `rustdesk/rustdesk-server` for OSS).
+Pro web console runs on port 21114 — activate your license there after first deploy.
+Check [github.com/rustdesk/rustdesk-server-pro/releases](https://github.com/rustdesk/rustdesk-server-pro/releases) before upgrading.
 To upgrade: update both `hbbs` and `hbbr` image tags, commit and push (or run workflow).
 
 ## Key files on the VPS (after first deploy)
@@ -77,7 +79,7 @@ See `docs/RUNBOOK.md` § Rollback for manual options.
 - [ ] DNS A record for relay hostname → VPS IP
 - [ ] Ubuntu 22.04/24.04, deploy user, SSH key in `authorized_keys`
 - [ ] SSH: `PermitRootLogin no`, `PasswordAuthentication no`
-- [ ] UFW: allow 22 (or custom SSH port), 21115–21119/tcp, 21116/udp
+- [ ] UFW: allow 22 (or custom SSH port), 21114/tcp (Pro console), 21115–21119/tcp, 21116/udp
 - [ ] `scripts/hardening/ubuntu-initial.sh` (fail2ban, unattended-upgrades)
 - [ ] Docker installed, deploy user in `docker` group (or passwordless sudo for `docker compose`)
 - [ ] `mkdir -p ~/cafe80`
